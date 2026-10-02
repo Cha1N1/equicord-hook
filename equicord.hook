@@ -1,0 +1,13 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = discord
+Target = discord-ptb
+Target = discord-canary
+
+[Action]
+Description = Patching Discord with Equicord...
+When = PostTransaction
+Exec = /usr/bin/equicord-hook-script
+NetworkAccess = allowed

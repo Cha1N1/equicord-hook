@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+echo_hook() { echo "HOOK  $*"; }
+
+user="${SUDO_USER:-$DOAS_USER}"
+if [ -z "$user" ]; then
+    user=$(who | awk '$1 != "root" {print $1; exit}')
+fi
+if [ -z "$user" ]; then
+    echo_hook "Could not determine user. Skipping Equicord patch."
+    exit 0
+fi
+
+home=$(getent passwd "$user" | cut -d: -f6)
+dir="$home/.config/discord"
+[ -d "$dir" ] || { echo_hook "No $dir, skipping."; exit 0; }
+
+if command -v equicord-installer &>/dev/null; then
+    bin=$(command -v equicord-installer)
+elif [ -x "$home/.local/bin/equicord-installer" ]; then
+    bin="$home/.local/bin/equicord-installer"
+else
+    echo_hook "equicord-installer not found, skipping."
+    exit 0
+fi
+
+echo_hook "Installing Equicord at $dir"
+# pacman runs hooks in an isolated, network-less namespace; run in the host's
+"$bin" -install -location "$dir" || {
+    echo_hook "Equicord install failed."
+    exit 1
+}
